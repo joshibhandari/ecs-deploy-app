@@ -1,0 +1,57 @@
+name: Deploy application
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  aws_reagion: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu:latest
+    environment: ddevelopment
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-key-id: ${{ secrets.AWS_SECRET_KEY }}
+          aws-reagion: ${{ env.aws_reagion }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image.
+        run: |
+          docker build -t ecs-ns/app .
+
+      - name: Tag docker image.
+        run: |
+          docker tag ecs-ns/app:latest 615299739317.dkr.ecr.us-west-2.amazonaws.com/ecs-ns/app:latest
+
+      - name: Push docker image.
+        run: |
+          docker push 615299739317.dkr.ecr.us-west-2.amazonaws.com/ecs-ns/app:latest
+
+      - name: Fill in the new image id in the Amazon ECS task defination
+        id: task-def
+        uses: aws-action/amazon-ecs-render-task-defination@v1
+        with:
+          task-definition: taskdefinition.json 
+          container-name: MyApp
+          image: ${{ steps.build-image.outputs.image }}
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: MyApp
+          cluster: MyCluster
+          wait-for-service-stability: true 
