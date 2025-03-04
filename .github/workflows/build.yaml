@@ -23,19 +23,34 @@ jobs:
 
       - name: Run tests
         run: npm test
-
-  approve:
-    runs-on: ubuntu-latest
-    needs: build
-    if: ${{ github.event_name == 'push' }}
-
-    steps:
-      - name: Request approval
-        run: echo "Waiting for approval before deploying."
-        id: approval
-
-      - name: Check for approval (manual approval step)
-        uses: peter-evans/workflow-dispatch@v1
+        
+    # Replace the incorrect action with a valid one
+      - name: Trigger another workflow
+        uses: actions/github-script@v3
         with:
-          workflow: 'deploy.yml'  # This is the next workflow that will run for deployment.
-          ref: refs/heads/main
+          script: |
+            const github = require('@actions/github');
+            const context = github.context;
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main'
+            });
+
+  # approve:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   if: ${{ github.event_name == 'push' }}
+
+  #   steps:
+  #     - name: Request approval
+  #       run: echo "Waiting for approval before deploying."
+  #       id: approval
+
+  #     - name: Check for approval (manual approval step)
+  #       uses: peter-evans/workflow-dispatch@v1
+  #       with:
+  #         workflow: 'deploy.yml'  # This is the next workflow that will run for deployment.
+  #         ref: refs/heads/main
+  
