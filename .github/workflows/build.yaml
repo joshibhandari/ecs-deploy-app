@@ -36,7 +36,7 @@ jobs:
         id: approval
 
       - name: Check for approval (manual approval step)
-        uses: peter-evans/workflow-dispatch@v1
+        uses: peter-evans/workflow-dispatch@v2
         with:
           workflow: 'deploy.yml'  # This is the next workflow that will run for deployment.
           ref: refs/heads/main
