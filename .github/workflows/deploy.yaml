@@ -1,16 +1,15 @@
 name: Deploy
 
 on:
-  workflow_dispatch:
-    inputs:
-      deployment_approval:
-        description: 'Approve deployment'
-        required: true
-        default: 'yes'
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout code
